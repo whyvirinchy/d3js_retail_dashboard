@@ -1,108 +1,95 @@
-Here’s a `README.md` for your **D3.js Retail Dashboard** project, considering the structure and files shown in your GitHub repository screenshot:
 
----
-
-````markdown
 # 📊 D3.js Retail Sales Dashboard
 
-This project is a **polished, interactive sales dashboard** built using **D3.js**. It visualizes sales performance of different stores over time, comparing metrics like **Daily Sales**, **Industry Average**, and **Global Average** from various datasets.
+This project is a **polished, interactive sales dashboard** built using **D3.js**. It visualizes retail sales performance across various stores and compares metrics such as **Daily Sales**, **Industry Average**, and **Global Average** using multiple datasets.
 
 ---
 
 ## 📁 Project Structure
 
-```bash
+```
 d3js_retail_dashboard/
 │
 ├── DASHBOARD/
 │   ├── Store_Sales_Dataset_2.csv
 │   ├── Store_Sales_Dataset_3.csv
 │   ├── Store_Sales_Q1_2025.csv
-│   └── index.html               # Main dashboard visualization (D3.js)
+│   └── index.html               # Main dashboard with interactive charts
 │
 ├── Task/
 │   ├── Store_Sales_Dataset_1.csv
 │   ├── Store_Sales_Dataset_2.csv
 │   ├── Store_Sales_Jan_to_June_2025.csv
-│   └── sales.html               # Additional dashboard task version
+│   └── sales.html               # Task-specific version of dashboard
 │
-├── README.md                    # Project documentation
-````
+├── README.md                    # This file
+```
 
 ---
 
 ## 🧩 Features
 
-* 📈 Multiple D3.js charts: line chart, bar chart, pie/donut chart, etc.
-* 🏪 Dataset filtering by store or dataset dropdown.
-* 🌍 Comparison between:
-
-  * Store Sales
-  * Industry Average
-  * Global Average
-* 🎨 Smooth animations, tooltips, and clean modern UI.
-* 🌓 Dark mode support (if enabled in styles).
-* 📂 Accepts any well-formatted CSV file with consistent metrics.
+- 📈 Multiple D3.js chart types: line, bar, pie/donut, scatter, and stacked bar.
+- 🏪 Dataset filter to compare store performance.
+- 🌍 Benchmarks included:
+  - Store Sales vs Industry Average
+  - Industry Average vs Global Average
+- 🎨 Smooth animations, tooltips, and modern UI.
+- 🌙 Dark mode support for better readability.
+- 📂 Accepts any CSV file with the correct structure.
 
 ---
 
-## 📄 Data Format
+## 📄 CSV File Format
 
-The CSV files should contain the following columns:
+The dashboard supports CSV files with the following columns:
 
 ```csv
-Date, Store, Daily Sales, Industry Average, Global Average
+Date,Store,Daily Sales,Industry Average,Global Average
 ```
+
+Make sure your CSV follows this structure to ensure proper visualization.
 
 ---
 
-## 🚀 How to Run
+## 🚀 How to Use
 
-1. Clone the repository:
-
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/whyvirinchy/d3js_retail_dashboard.git
    ```
 
-2. Open the dashboard:
+2. **Open the dashboard**:
+   - For full dashboard: open `DASHBOARD/index.html` in a browser
+   - For task version: open `Task/sales.html` in a browser
 
-   * For main version: `DASHBOARD/index.html`
-   * For task-specific version: `Task/sales.html`
-
-3. No server required. Just open the HTML files in a web browser.
-
----
-
-## 📦 Datasets
-
-The project includes various datasets such as:
-
-* `Store_Sales_Dataset_1.csv`
-* `Store_Sales_Dataset_2.csv`
-* `Store_Sales_Dataset_3.csv`
-* `Store_Sales_Q1_2025.csv`
-* `Store_Sales_Jan_to_June_2025.csv`
-
-These datasets allow performance analysis across different timeframes and stores.
+3. No backend/server required. Runs entirely in the browser.
 
 ---
 
-## 🛠 Tech Stack
+## 📦 Datasets Included
 
-* **D3.js v7**
-* **HTML5/CSS3**
-* **JavaScript (ES6)**
+- `Store_Sales_Dataset_1.csv`
+- `Store_Sales_Dataset_2.csv`
+- `Store_Sales_Dataset_3.csv`
+- `Store_Sales_Q1_2025.csv`
+- `Store_Sales_Jan_to_June_2025.csv`
 
----
-
-## 📬 Contact
-
-Created by [**@whyvirinchy**](https://github.com/whyvirinchy)
-Feel free to open issues or contribute!
-
-```
+These datasets contain sales metrics for various stores and date ranges to demonstrate different dashboard views.
 
 ---
 
-Let me know if you want this in `.md` file format or need different versions for each folder like `Task/README.md` and `DASHBOARD/README.md`.
-```
+## 🛠 Technologies Used
+
+- **D3.js v7**
+- **HTML5**
+- **CSS3**
+- **Vanilla JavaScript (ES6)**
+
+---
+
+## 🙋‍♂️ Author
+
+Created by [@whyvirinchy](https://github.com/whyvirinchy)
+
+Feel free to fork, improve, or raise issues!
