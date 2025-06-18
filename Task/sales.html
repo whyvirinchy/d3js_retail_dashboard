@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Sales Analytics Dashboard</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #f7f9fc;
+            --panel-bg: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --border-color: #e2e8f0;
+            --shadow-color-light: rgba(45, 55, 72, 0.08);
+            --shadow-color-dark: rgba(45, 55, 72, 0.04);
+            --glow-color: rgba(32, 99, 155, 0.3);
+            
+            --daily-sales-color: #20639B;
+            --industry-avg-color: #F6AD55;
+            --global-avg-color: #3CAEA3;
+            
+            --positive-color: #10b981;
+            --negative-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+        
+        body[data-theme="dark"] {
+            --bg-color: #1a202c;
+            --panel-bg: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow-color-light: rgba(0, 0, 0, 0.2);
+            --shadow-color-dark: rgba(0, 0, 0, 0.3);
+            --glow-color: rgba(60, 174, 163, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .main-container { max-width: 1200px; margin: 0 auto; }
+
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 20px; margin-bottom: 25px; padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color); transition: border-color 0.3s ease;
+        }
+        
+        .main-title { margin: 0; font-weight: 700; font-size: 28px; }
+        .controls-wrapper { display: flex; align-items: center; gap: 15px; }
+        
+        /* --- Welcome Screen Styles --- */
+        #content-container.welcome {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(80vh - 40px);
+            text-align: center;
+        }
+
+        .welcome-panel {
+            max-width: 800px;
+            padding: 50px;
+            background: var(--panel-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px -5px var(--shadow-color-light), 0 4px 10px -4px var(--shadow-color-dark);
+            opacity: 0;
+            animation: fadeInDown 0.8s 0.2s ease-out forwards;
+        }
+
+        .welcome-panel h1 { font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 15px; }
+        .welcome-panel .subtitle { font-size: 18px; color: var(--text-secondary); max-width: 600px; margin: 0 auto 35px auto; line-height: 1.6; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 35px; text-align: left; }
+        .feature-item h3 { font-size: 16px; margin-bottom: 8px; }
+        .feature-item p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+        .upload-cta .file-upload-wrapper { transform: scale(1.1); margin-bottom: 10px; }
+        .upload-cta p { font-size: 13px; color: var(--text-secondary); }
+        .upload-cta code { background-color: var(--bg-color); border: 1px solid var(--border-color); padding: 2px 6px; border-radius: 5px; font-size: 0.85em; }
+
+        /* --- General Button & Input --- */
+        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
+        .file-upload-btn {
+            background-color: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 10px 18px; font-weight: 500; font-size: 14px;
+            color: var(--text-primary); box-shadow: 0 1px 2px var(--shadow-color-dark);
+            transition: all 0.3s ease; cursor: pointer;
+        }
+        .file-upload-btn:hover { background-color: var(--bg-color); box-shadow: 0 2px 4px var(--shadow-color-light); transform: translateY(-1px); }
+        .file-upload-btn.has-file { background-color: var(--info-color); color: white; }
+        #csv-upload { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .theme-toggle-btn {
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; box-shadow: 0 1px 2px var(--shadow-color-dark);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle-btn:hover { transform: translateY(-2px) scale(1.05); }
+
+        /* --- Chart Styles --- */
+        #content-container.dashboard { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        .chart-panel {
+            background: var(--panel-bg); padding: 25px; border-radius: 16px;
+            box-shadow: 0 4px 15px -1px var(--shadow-color-light), 0 2px 8px -1px var(--shadow-color-dark);
+            border: 1px solid var(--border-color); overflow: hidden; transition: all 0.4s ease;
+        }
+        .panel-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--text-primary); }
+        
+        .tooltip {
+            position: absolute; background: rgba(26, 32, 44, 0.95); color: white;
+            backdrop-filter: blur(5px); padding: 12px 18px; border-radius: 10px;
+            pointer-events: none; font-size: 14px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            line-height: 1.8; opacity: 0; white-space: nowrap;
+            transition: opacity 0.2s ease, transform 0.2s ease; transform: scale(0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tooltip.visible { opacity: 1; transform: scale(1); }
+        .tooltip-value { font-weight: 700; }
+        .positive { color: var(--positive-color); } .negative { color: var(--negative-color); }
+        
+        .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        .legend-item { display: flex; align-items: center; font-size: 13px; color: var(--text-secondary); }
+        .legend-color { width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; }
+
+        .insights-panel {
+            padding: 20px; margin-top: 20px; background-color: var(--bg-color);
+            border-radius: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; text-align: center; border: 1px solid var(--border-color);
+        }
+        .insight { display: flex; flex-direction: column; }
+        .insight-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .insight-value { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .insight-value .date { font-weight: 400; font-size: 14px; color: var(--text-secondary); }
+        
+        .line-path { stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; fill: none; transition: all 0.3s ease; }
+        .line-daily-sales { stroke: var(--daily-sales-color); stroke-width: 2.5; filter: drop-shadow(0 2px 3px var(--glow-color)); }
+        .line-industry-average { stroke: var(--industry-avg-color); } .line-global-average { stroke: var(--global-avg-color); }
+        .focus-dot { transition: opacity 0.2s ease; stroke-width: 2px; stroke: var(--panel-bg); }
+        .axis path, .axis line { stroke: var(--border-color); }
+        .axis text { fill: var(--text-secondary); font-size: 11px; }
+        .grid line { stroke: var(--border-color); stroke-opacity: 0.6; stroke-dasharray: 2, 4; }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="main-container">
+        <div class="dashboard-header">
+            <h1 class="main-title">Advanced Sales Analytics</h1>
+            <div class="controls-wrapper">
+                <button id="upload-btn" class="file-upload-btn">📂 Upload CSV</button>
+                <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+                <button class="theme-toggle-btn" id="theme-toggle" title="Toggle Theme">
+                    <span>🌙</span>
+                </button>
+            </div>
+        </div>
+        <div id="content-container">
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentContainer = d3.select("#content-container");
+            const uploadBtn = d3.select("#upload-btn");
+            const fileInput = d3.select("#csv-upload");
+            const themeToggle = d3.select("#theme-toggle");
+            const body = d3.select("body");
+
+            const colorMap = { "Daily Sales": "var(--daily-sales-color)", "Industry Average": "var(--industry-avg-color)", "Global Average": "var(--global-avg-color)" };
+            const parseDate = d3.timeParse("%Y-%m-%d");
+            const formatDate = d3.timeFormat("%b %d, %Y");
+            const formatCurrencyAxis = (d) => `₹${(d/1000).toFixed(0)}k`;
+            const formatCurrencyTooltip = (d) => `₹${d.toLocaleString('en-IN')}`;
+            
+            const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+            let currentTheme = 'light';
+            let currentFile = null;
+
+            function buildWelcomeScreen() {
+                contentContainer.html(""); // Clear previous content
+                contentContainer.attr('class', 'welcome'); // Set mode for styling
+
+                const panel = contentContainer.append('div').attr('class', 'welcome-panel');
+                panel.html(`
+                    <h1> Welcome to Your Advanced Sales Dashboard!</h1>
+                    <p class="subtitle">Transform your sales data into clear, actionable insights. Visualize store performance, compare with industry benchmarks, and uncover trends at a glance.</p>
+                    <div class="features-grid">
+                        <div class="feature-item"><h3> Dynamic Charts</h3><p>Upload a CSV to generate interactive charts for each store, comparing daily sales with key benchmarks.</p></div>
+                        <div class="feature-item"><h3> Key Insights</h3><p>Each chart is paired with an automated summary of highest, lowest, and average sales performance.</p></div>
+                        <div class="feature-item"><h3> Interactive Tooltips</h3><p>Hover your mouse over the charts to get precise, day-by-day sales figures for all performance lines.</p></div>
+                    </div>
+                    <div class="upload-cta">
+                         <button id="welcome-upload-btn" class="file-upload-btn">📂 Upload CSV to Begin</button>
+                         <p>Requires columns: <code>Store</code>, <code>Date</code>, <code>Daily Sales</code>, <code>Industry Average</code>, <code>Global Average</code></p>
+                    </div>
+                `);
+
+                d3.select("#welcome-upload-btn").on("click", () => fileInput.node().click());
+            }
+
+            themeToggle.on("click", () => {
+                currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+                body.attr('data-theme', currentTheme);
+                themeToggle.select('span').text(currentTheme === 'light' ? '🌙' : '☀️');
+            });
+
+            uploadBtn.on("click", function() {
+                if (currentFile) {
+                    // Clear current file and reset
+                    currentFile = null;
+                    uploadBtn.classed("has-file", false).text("📂 Upload CSV");
+                    buildWelcomeScreen();
+                } else {
+                    // Trigger file selection
+                    fileInput.node().click();
+                }
+            });
+
+            fileInput.on("change", function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                currentFile = file;
+                uploadBtn.classed("has-file", true).text("✖ Clear File");
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = d3.csvParse(e.target.result);
+                        processData(data, file.name);
+                    } catch (error) {
+                        displayError(`Error parsing ${file.name}: ${error.message}`);
+                    }
+                };
+                reader.onerror = () => displayError(`Failed to read ${file.name}.`);
+                reader.readAsText(file);
+            });
+
+            function processData(data, fileName) {
+                const requiredColumns = ['Store', 'Date', 'Daily Sales', 'Industry Average', 'Global Average'];
+                if (data.length === 0 || !requiredColumns.every(col => data[0]?.hasOwnProperty(col))) {
+                    const missing = requiredColumns.filter(col => !data[0]?.hasOwnProperty(col));
+                    displayError(`Invalid CSV format. Missing columns: ${missing.join(', ')}`);
+                    return;
+                }
+                
+                contentContainer.html(""); // Clear welcome message
+                contentContainer.attr('class', 'dashboard'); // Set mode for styling
+
+                data.forEach(d => {
+                    d.Date = parseDate(d.Date);
+                    Object.keys(colorMap).forEach(key => d[key] = +d[key]);
+                });
+
+                const stores = [...new Set(data.map(d => d.Store))].sort();
+                stores.forEach((store, i) => {
+                    renderChart(data.filter(d => d.Store === store), store, i);
+                });
+            }
+            
+            function displayError(message) {
+                 contentContainer.html("");
+                 contentContainer.attr('class', 'welcome');
+                 const panel = contentContainer.append('div').attr('class', 'welcome-panel');
+                 panel.html(`<div style="border-left: 4px solid var(--negative-color); padding: 20px; text-align: left;">
+                                <h3>⚠️ Oops, something went wrong!</h3>
+                                <p style="color: var(--text-secondary);">${message}</p>
+                                <button id="error-try-again-btn" style="margin-top: 15px; background: var(--info-color); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer;">
+                                Try Again
+                                </button>
+                             </div>`);
+                d3.select('#error-try-again-btn').on('click', buildWelcomeScreen);
+            }
+            
+            function renderChart(storeData, storeName, index) {
+                const panel = contentContainer.append("div").attr("class", "chart-panel").style("opacity", 0).style("transform", "translateY(20px)");
+                panel.append("h2").attr("class", "panel-title").text(` ${storeName}`);
+
+                const svg = panel.append("svg").attr("viewBox", `0 0 1000 450`);
+                const margin = {top: 20, right: 40, bottom: 50, left: 70}, width = 1000 - margin.left - margin.right, height = 450 - margin.top - margin.bottom;
+                const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                const x = d3.scaleTime().domain(d3.extent(storeData, d => d.Date)).range([0, width]);
+                const y = d3.scaleLinear().domain([0, d3.max(storeData, d => Math.max(d["Daily Sales"], d["Industry Average"], d["Global Average"])) * 1.15]).range([height, 0]).nice();
+                
+                g.append("defs").append("linearGradient").attr("id", `grad-${index}`).attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%")
+                 .call(grad => grad.append("stop").attr("offset", "0%").attr("stop-color", "var(--daily-sales-color)").attr("stop-opacity", 0.4))
+                 .call(grad => grad.append("stop").attr("offset", "100%").attr("stop-color", "var(--daily-sales-color)").attr("stop-opacity", 0));
+                
+                g.append("path").datum(storeData).attr("fill", `url(#grad-${index})`).attr("d", d3.area().x(d => x(d.Date)).y0(height).y1(d => y(d["Daily Sales"])).curve(d3.curveCatmullRom.alpha(0.5))).style("opacity", 0).transition().duration(1200).delay(300).style("opacity", 1);
+                
+                g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(""));
+                g.append("g").attr("class", "axis y-axis").call(d3.axisLeft(y).ticks(5).tickFormat(formatCurrencyAxis));
+                g.append("g").attr("class", "axis x-axis").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(d3.timeMonth.every(1)).tickFormat(d3.timeFormat("%b")));
+                
+                const linePaths = g.selectAll(".line-path").data(Object.keys(colorMap)).enter().append("path")
+                    .attr("class", d => `line-path line-${d.toLowerCase().replace(/\s+/g, '-')}`)
+                    .attr("d", key => d3.line().x(d => x(d.Date)).y(d => y(d[key])).curve(d3.curveCatmullRom.alpha(0.5))(storeData));
+
+                linePaths.each(function() { 
+                    const length = this.getTotalLength();
+                    if(length > 0) { d3.select(this).attr("stroke-dasharray", `${length} ${length}`).attr("stroke-dashoffset", length).transition().ease(d3.easeCubicInOut).duration(1800).delay(200).attr("stroke-dashoffset", 0); }
+                });
+                
+                const focusDots = g.selectAll(".focus-dot").data(Object.keys(colorMap)).enter().append("circle").attr("class", "focus-dot").attr("r", 5).attr("fill", key => colorMap[key]).style("opacity", 0);
+
+                g.append("rect").attr("width", width).attr("height", height).style("fill", "none").style("pointer-events", "all")
+                    .on("mouseover", () => { tooltip.classed("visible", true); focusDots.style("opacity", 1); })
+                    .on("mouseout", () => {
+                        tooltip.classed("visible", false); focusDots.style("opacity", 0);
+                        linePaths.filter(".line-daily-sales").style("stroke-width", "2.5px");
+                        linePaths.filter(":not(.line-daily-sales)").style("stroke-width", "1.75px");
+                    })
+                    .on("mousemove", (event) => {
+                        const [mx] = d3.pointer(event, g.node());
+                        const x0 = x.invert(mx), i = d3.bisector(d => d.Date).left(storeData, x0, 1);
+                        const d0 = storeData[i - 1], d1 = storeData[i];
+                        if (!d0 || !d1) return;
+                        const d = (x0 - d0.Date > d1.Date - x0) ? d1 : d0;
+                        
+                        focusDots.attr("transform", key => `translate(${x(d.Date)}, ${y(d[key])})`);
+                        linePaths.filter(".line-daily-sales").style("stroke-width", "1px");
+                        linePaths.filter(":not(.line-daily-sales)").style("stroke-width", "2px");
+                        
+                        const salesClass = d["Daily Sales"] >= d["Industry Average"] ? 'positive' : 'negative';
+
+                        tooltip.html(`
+                            <div style="font-weight:600; margin-bottom:8px;">${formatDate(d.Date)}</div>
+                            <div><span style="color:${colorMap['Daily Sales']}">●</span> Daily: <strong class="tooltip-value ${salesClass}">${formatCurrencyTooltip(d["Daily Sales"])}</strong></div>
+                            <div><span style="color:${colorMap['Industry Average']}">●</span> Industry: <strong class="tooltip-value">${formatCurrencyTooltip(d["Industry Average"])}</strong></div>
+                            <div><span style="color:${colorMap['Global Average']}">●</span> Global: <strong class="tooltip-value">${formatCurrencyTooltip(d["Global Average"])}</strong></div>
+                        `).style("left", (event.pageX + 20) + "px").style("top", (event.pageY - 20) + "px");
+                    });
+                
+                const legend = panel.append("div").attr("class", "legend");
+                Object.keys(colorMap).forEach(key => {
+                    const item = legend.append("div").attr("class", "legend-item");
+                    item.append("div").attr("class", "legend-color").style("background-color", colorMap[key]);
+                    item.append("span").text(key);
+                });
+
+                const maxSaleData = storeData[d3.greatestIndex(storeData, d => d["Daily Sales"])];
+                const minSaleData = storeData[d3.leastIndex(storeData, d => d["Daily Sales"])];
+                const avgSale = d3.mean(storeData, d => d["Daily Sales"]);
+                
+                panel.append("div").attr("class", "insights-panel").html(`
+                    <div class="insight"><div class="insight-title">Highest Sales</div><div class="insight-value">${formatCurrencyTooltip(maxSaleData["Daily Sales"])} <span class="date">on ${formatDate(maxSaleData.Date)}</span></div></div>
+                    <div class="insight"><div class="insight-title">Lowest Sales</div><div class="insight-value">${formatCurrencyTooltip(minSaleData["Daily Sales"])} <span class="date">on ${formatDate(minSaleData.Date)}</span></div></div>
+                    <div class="insight"><div class="insight-title">Average Daily Sales</div><div class="insight-value">${formatCurrencyTooltip(Math.round(avgSale))}</div></div>
+                `);
+
+                panel.transition().duration(600).delay(150 * index).ease(d3.easeCubicOut).style("opacity", 1).style("transform", "translateY(0)");
+            }
+            
+            buildWelcomeScreen();
+        });
+    </script>
+</body>
+</html>
