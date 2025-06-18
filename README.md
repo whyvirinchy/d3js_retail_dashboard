@@ -61,10 +61,8 @@ Make sure your CSV follows this structure to ensure proper visualization.
 
 2. **Open the dashboard**:
    - For full dashboard: open `DASHBOARD/index.html` in a browser
-   - For task version: open `Task/sales.html` in a browser
-
-3. No backend/server required. Runs entirely in the browser.
-
+   - For line chart dashboard: open `Task/sales.html` in a browser
+       - Open the sales.html file in vscode and then go live
 ---
 
 ## 📦 Datasets Included
